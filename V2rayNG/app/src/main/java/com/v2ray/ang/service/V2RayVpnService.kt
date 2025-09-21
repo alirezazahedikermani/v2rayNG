@@ -26,6 +26,7 @@ import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.handler.SpeedtestManager
 import com.v2ray.ang.handler.V2RayServiceManager
 import com.v2ray.ang.handler.V2rayConfigManager
+import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.MyContextWrapper
 import com.v2ray.ang.util.Utils
 import java.lang.ref.SoftReference
@@ -409,7 +410,9 @@ class V2RayVpnService : VpnService(), ServiceControl {
                 if (result >= 0) {
                     V2RayServiceManager.stopCoreLoop()
                     MmkvManager.setSelectServer(nextServerGuid)
-                    V2RayServiceManager.startCoreLoop()
+                    if (V2RayServiceManager.startCoreLoop()) {
+                        MessageUtil.sendMsg2UI(this, AppConfig.MSG_RELOAD_UI, "")
+                    }
                 }
             }
             autoSwitchRunnable?.let { autoSwitchHandler?.postDelayed(it, autoSwitchInterval * 1000) }

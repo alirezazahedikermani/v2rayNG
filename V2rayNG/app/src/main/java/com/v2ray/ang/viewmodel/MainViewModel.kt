@@ -464,6 +464,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     MmkvManager.encodeServerTestDelayMillis(resultPair.first, resultPair.second)
                     updateListAction.value = getPosition(resultPair.first)
                 }
+                AppConfig.MSG_RELOAD_UI -> {
+                    reloadServerList()
+                }
             }
         }
     }
