@@ -23,7 +23,9 @@ import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.NotificationManager
 import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.handler.SpeedtestManager
 import com.v2ray.ang.handler.V2RayServiceManager
+import com.v2ray.ang.handler.V2rayConfigManager
 import com.v2ray.ang.util.MyContextWrapper
 import com.v2ray.ang.util.Utils
 import java.lang.ref.SoftReference
