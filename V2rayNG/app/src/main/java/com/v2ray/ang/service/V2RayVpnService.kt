@@ -11,6 +11,8 @@ import android.net.NetworkRequest
 import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.ParcelFileDescriptor
 import android.os.StrictMode
 import android.util.Log
@@ -30,6 +32,10 @@ class V2RayVpnService : VpnService(), ServiceControl {
     private lateinit var mInterface: ParcelFileDescriptor
     private var isRunning = false
     private var tun2SocksService: Tun2SocksControl? = null
+    private var autoSwitchHandler: Handler? = null
+    private var autoSwitchRunnable: Runnable? = null
+    private var autoSwitchEnabled = false
+    private var autoSwitchInterval = 60L
 
     /**destroy
      * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
@@ -73,6 +79,20 @@ class V2RayVpnService : VpnService(), ServiceControl {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
         V2RayServiceManager.serviceControl = SoftReference(this)
+
+        autoSwitchEnabled = MmkvManager.decodeSettingsBool(AppConfig.PREF_AUTO_SWITCH_ENABLED, false)
+        autoSwitchInterval = try {
+            MmkvManager.decodeSettingsString(AppConfig.PREF_AUTO_SWITCH_INTERVAL, "60")?.toLong() ?: 60L
+        } catch (e: Exception) {
+            60L
+        }
+
+        if (autoSwitchEnabled) {
+            val handlerThread = HandlerThread("AutoSwitchThread")
+            handlerThread.start()
+            autoSwitchHandler = Handler(handlerThread.looper)
+            createAutoSwitchRunnable()
+        }
     }
 
     override fun onRevoke() {
@@ -136,6 +156,9 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
 
         runTun2socks()
+        if (autoSwitchEnabled) {
+            autoSwitchRunnable?.let { autoSwitchHandler?.post(it) }
+        }
     }
 
     /**
@@ -332,6 +355,9 @@ class V2RayVpnService : VpnService(), ServiceControl {
             }
         }
 
+        if (autoSwitchEnabled) {
+            autoSwitchRunnable?.let { autoSwitchHandler?.removeCallbacks(it) }
+        }
         tun2SocksService?.stopTun2Socks()
         tun2SocksService = null
 
@@ -350,6 +376,41 @@ class V2RayVpnService : VpnService(), ServiceControl {
             } catch (e: Exception) {
                 Log.e(AppConfig.TAG, "Failed to close VPN interface", e)
             }
+        }
+    }
+
+    private fun createAutoSwitchRunnable() {
+        autoSwitchRunnable = Runnable {
+            val serverList = MmkvManager.decodeServerList()
+            val currentServer = MmkvManager.getSelectServer()
+            if (currentServer != null) {
+                serverList.remove(currentServer)
+            }
+
+            if (serverList.isNotEmpty()) {
+                var nextServerGuid: String
+                var result: Long
+                do {
+                    val randomIndex = (0 until serverList.size).random()
+                    nextServerGuid = serverList[randomIndex]
+                    val configResult = V2rayConfigManager.getV2rayConfig4Speedtest(this, nextServerGuid)
+                    result = if (configResult.status) {
+                        SpeedtestManager.realPing(configResult.content)
+                    } else {
+                        -1
+                    }
+                    if (result < 0) {
+                        serverList.remove(nextServerGuid)
+                    }
+                } while (result < 0 && serverList.isNotEmpty())
+
+                if (result >= 0) {
+                    V2RayServiceManager.stopCoreLoop()
+                    MmkvManager.setSelectServer(nextServerGuid)
+                    V2RayServiceManager.startCoreLoop()
+                }
+            }
+            autoSwitchRunnable?.let { autoSwitchHandler?.postDelayed(it, autoSwitchInterval * 1000) }
         }
     }
 }

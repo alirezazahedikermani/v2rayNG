@@ -397,4 +397,9 @@
     </string-array>
     <string name="pre_resolving_domain">Pre-resolving domain…</string>
 
+    <string name="title_auto_switch_setting">Auto Switch Settings</string>
+    <string name="title_pref_auto_switch_enabled">Enable Auto Switch</string>
+    <string name="summary_pref_auto_switch_enabled">Automatically switch to a random server at a set interval</string>
+    <string name="title_pref_auto_switch_interval">Auto Switch Interval (Seconds)</string>
+
 </resources>

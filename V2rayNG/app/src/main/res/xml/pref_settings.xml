@@ -205,6 +205,20 @@
             android:title="@string/title_pref_auto_update_interval" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/title_auto_switch_setting">
+        <CheckBoxPreference
+            android:key="pref_auto_switch_enabled"
+            android:title="@string/title_pref_auto_switch_enabled"
+            android:summary="@string/summary_pref_auto_switch_enabled"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="pref_auto_switch_interval"
+            android:title="@string/title_pref_auto_switch_interval"
+            android:summary="%s"
+            android:defaultValue="60"
+            android:inputType="number" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/title_core_settings">
 
         <CheckBoxPreference
