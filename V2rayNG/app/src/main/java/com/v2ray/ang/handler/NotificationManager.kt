@@ -40,7 +40,6 @@ object NotificationManager {
     private var mNotificationManager: NotificationManager? = null
     private var sessionStartDownload = 0L
     private var currentConfigGuid: String? = null
-    private var downloadUpdateCounter = 0
 
     /**
      * Starts the speed notification.
@@ -53,7 +52,6 @@ object NotificationManager {
         lastQueryTime = System.currentTimeMillis()
         sessionStartDownload = 0L
         currentConfigGuid = MmkvManager.getSelectServer()
-        downloadUpdateCounter = 0 // Reset counter when starting speed notification
         var lastZeroSpeed = false
         val outboundTags = currentConfig?.getAllOutboundTags()
         outboundTags?.remove(AppConfig.TAG_DIRECT)
@@ -106,28 +104,29 @@ object NotificationManager {
      * @param downloadBytes The bytes downloaded in this query.
      */
     private fun updateTotalDownload(guid: String?, downloadBytes: Long) {
-        if (guid == null || downloadBytes == 0L) {
-            android.util.Log.i(AppConfig.TAG, "DownloadTracking: Skipping update - guid=$guid, bytes=$downloadBytes")
+        if (guid == null) {
+            android.util.Log.i(AppConfig.TAG, "DownloadTracking: Skipping update - guid is null")
             return
         }
 
-        android.util.Log.i(AppConfig.TAG, "DownloadTracking: Saving $downloadBytes bytes for config $guid")
-        MmkvManager.addServerDownloadBytes(guid, downloadBytes)
+        android.util.Log.i(AppConfig.TAG, "DownloadTracking: Query returned $downloadBytes bytes for config $guid")
 
-        // Check what was actually saved
-        val aff = MmkvManager.decodeServerAffiliationInfo(guid)
-        android.util.Log.i(AppConfig.TAG, "DownloadTracking: Total now: ${aff?.totalDownloadBytes} bytes (${aff?.getTotalDownloadString()})")
-
-        // Update UI every 5 iterations (15 seconds) to show download stats
-        downloadUpdateCounter++
-        if (downloadUpdateCounter >= 5) {
-            downloadUpdateCounter = 0
-            android.util.Log.i(AppConfig.TAG, "DownloadTracking: Sending UI update message")
-            val service = getService()
-            service?.let {
-                MessageUtil.sendMsg2UI(it, AppConfig.MSG_DOWNLOAD_STATS_UPDATE, "")
-            }
+        // Save stats even if 0 to ensure we update
+        if (downloadBytes > 0L) {
+            MmkvManager.addServerDownloadBytes(guid, downloadBytes)
+            android.util.Log.i(AppConfig.TAG, "DownloadTracking: Saved $downloadBytes bytes")
         }
+
+        // Check current total
+        val aff = MmkvManager.decodeServerAffiliationInfo(guid)
+        android.util.Log.i(AppConfig.TAG, "DownloadTracking: Total for $guid: ${aff?.totalDownloadBytes} bytes (${aff?.getTotalDownloadString()})")
+
+        // Send UI update every time (every 3 seconds)
+        val service = getService()
+        service?.let {
+            android.util.Log.i(AppConfig.TAG, "DownloadTracking: Sending UI update message")
+            MessageUtil.sendMsg2UI(it, AppConfig.MSG_DOWNLOAD_STATS_UPDATE, "")
+        } ?: android.util.Log.e(AppConfig.TAG, "DownloadTracking: Service is null, cannot send UI update")
     }
 
     /**
@@ -150,7 +149,6 @@ object NotificationManager {
         }
 
         currentConfigGuid = MmkvManager.getSelectServer()
-        downloadUpdateCounter = 0 // Reset counter when starting new tracking
         val outboundTags = currentConfig?.getAllOutboundTags()
         outboundTags?.remove(AppConfig.TAG_DIRECT)
 
