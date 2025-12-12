@@ -159,6 +159,15 @@ object V2RayServiceManager {
         // Update current config and notifications
         currentConfig = newConfig
         NotificationManager.showNotification(currentConfig)
+
+        // Stop existing tracking jobs
+        NotificationManager.stopSpeedNotification(null)
+        NotificationManager.stopDownloadTracking()
+
+        // Restart speed notification if enabled (it tracks downloads)
+        NotificationManager.startSpeedNotification(currentConfig)
+
+        // Start download tracking (only runs if speed notification is disabled)
         NotificationManager.startDownloadTracking(currentConfig)
 
         // Restart auto-switch with the new config GUID
