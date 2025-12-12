@@ -304,6 +304,31 @@ object V2RayServiceManager {
         // Stop auto-switch
         AutoSwitchManager.stopAutoSwitch()
 
+        // Save download stats before stopping the core
+        val guid = MmkvManager.getSelectServer()
+        if (guid != null && coreController.isRunning) {
+            try {
+                val config = MmkvManager.decodeServerConfig(guid)
+                val outboundTags = config?.getAllOutboundTags()
+                outboundTags?.remove(AppConfig.TAG_DIRECT)
+
+                var totalDownload = 0L
+                outboundTags?.forEach {
+                    val down = queryStats(it, AppConfig.DOWNLINK)
+                    totalDownload += down
+                }
+                val directDownlink = queryStats(AppConfig.TAG_DIRECT, AppConfig.DOWNLINK)
+                totalDownload += directDownlink
+
+                if (totalDownload > 0L) {
+                    MmkvManager.addServerDownloadBytes(guid, totalDownload)
+                    Log.i(AppConfig.TAG, "Saved $totalDownload bytes for config $guid before stop")
+                }
+            } catch (e: Exception) {
+                Log.e(AppConfig.TAG, "Failed to save download stats before stop", e)
+            }
+        }
+
         if (coreController.isRunning) {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
