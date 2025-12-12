@@ -66,6 +66,7 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
             val aff = MmkvManager.decodeServerAffiliationInfo(guid)
             val address = getAddress(profile)
             val download = aff?.getTotalDownloadString() ?: ""
+            Log.i(AppConfig.TAG, "UI: Binding config $guid - download bytes: ${aff?.totalDownloadBytes}, display: '$download'")
             holder.itemMainBinding.tvStatistics.text = if (download.isNotEmpty()) {
                 "$address • ↓$download"
             } else {

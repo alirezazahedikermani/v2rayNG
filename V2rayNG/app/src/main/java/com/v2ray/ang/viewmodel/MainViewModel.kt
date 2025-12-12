@@ -480,6 +480,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 AppConfig.MSG_DOWNLOAD_STATS_UPDATE -> {
                     // Download stats have been updated, refresh the UI to show new stats
+                    Log.i(AppConfig.TAG, "MainViewModel: Received MSG_DOWNLOAD_STATS_UPDATE, refreshing list")
                     updateListAction.postValue(-1)
                 }
             }
