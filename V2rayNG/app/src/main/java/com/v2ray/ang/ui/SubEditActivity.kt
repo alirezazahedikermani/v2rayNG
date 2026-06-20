@@ -59,6 +59,7 @@ class SubEditActivity : BaseActivity() {
         binding.autoUpdateCheck.isChecked = subItem.autoUpdate
         binding.etUpdateInterval.text = Utils.getEditable(subItem.updateInterval.toString())
         binding.allowInsecureUrl.isChecked = subItem.allowInsecureUrl
+        binding.mergeMode.isChecked = subItem.mergeMode
         binding.etPreProfile.text = Utils.getEditable(subItem.prevProfile)
         binding.etNextProfile.text = Utils.getEditable(subItem.nextProfile)
         return true
@@ -145,6 +146,7 @@ class SubEditActivity : BaseActivity() {
         subItem.prevProfile = binding.etPreProfile.text.toString()
         subItem.nextProfile = binding.etNextProfile.text.toString()
         subItem.allowInsecureUrl = binding.allowInsecureUrl.isChecked
+        subItem.mergeMode = binding.mergeMode.isChecked
 
         if (TextUtils.isEmpty(subItem.remarks)) {
             toast(R.string.sub_setting_remarks)

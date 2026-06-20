@@ -309,6 +309,7 @@
     <string name="sub_setting_enable">Enable update</string>
     <string name="sub_auto_update">Enable automatic update</string>
     <string name="sub_allow_insecure_url">Allow insecure HTTP address</string>
+    <string name="sub_merge_mode">Merge new configs (keep existing)</string>
     <string name="sub_setting_pre_profile">Previous proxy config remarks</string>
     <string name="sub_setting_next_profile">Next proxy config remarks</string>
     <string name="sub_setting_pre_profile_tip">The config remarks exist and are unique</string>
