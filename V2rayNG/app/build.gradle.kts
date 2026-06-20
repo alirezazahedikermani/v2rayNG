@@ -93,9 +93,9 @@ android {
 
 androidComponents {
     onVariants { variant ->
-        val isFdroid = variant.flavorName == "fdroid"
-        val versionName = variant.outputs.firstNotNullOfOrNull { it.versionName.get() } ?: ""
-        val versionCode = variant.outputs.firstNotNullOfOrNull { it.versionCode.get() } ?: 0
+        val isFdroid = variant.productFlavors.any { it.first == "distribution" && it.second == "fdroid" }
+        val versionName = variant.outputs.firstNotNullOfOrNull { it.versionName.orNull } ?: ""
+        val versionCode = variant.outputs.firstNotNullOfOrNull { it.versionCode.orNull } ?: 0
 
         if (isFdroid) {
             val versionCodes =

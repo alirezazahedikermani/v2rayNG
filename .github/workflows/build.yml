@@ -119,9 +119,10 @@ jobs:
 
     - name: Upload to release
       uses: svenstaro/upload-release-action@v2
-      if: github.event.inputs.release_tag != ''
+      if: github.event_name == 'push' || github.event.inputs.release_tag != ''
       with:
         file: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/release/*.apk
-        tag: ${{ github.event.inputs.release_tag }}
+        tag: ${{ github.event.inputs.release_tag || 'latest' }}
+        overwrite: true
         file_glob: true
         prerelease: true
