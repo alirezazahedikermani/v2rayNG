@@ -57,7 +57,8 @@ jobs:
 
     - name: Copy libhevtun
       run: |
-        cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
+        mkdir -p ${{ github.workspace }}/V2rayNG/app/libs
+        cp -r ${{ github.workspace }}/libs/. ${{ github.workspace }}/V2rayNG/app/libs/
 
     - name: Fetch AndroidLibXrayLite tag
       run: |
