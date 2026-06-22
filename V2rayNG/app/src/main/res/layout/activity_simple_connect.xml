@@ -30,9 +30,25 @@
         android:textSize="24sp"
         android:textColor="#FFFFFF"
         android:backgroundTint="@color/md_theme_secondary"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btn_next"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_status" />
+
+    <Button
+        android:id="@+id/btn_next"
+        android:layout_width="160dp"
+        android:layout_height="52dp"
+        android:text="بعدی"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="@color/md_theme_secondary"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_connect"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="32dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
