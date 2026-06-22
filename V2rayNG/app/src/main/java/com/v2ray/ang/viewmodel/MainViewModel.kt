@@ -82,7 +82,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         updateCache()
-        updateListAction.value = -1
+        updateListAction.postValue(-1)
     }
 
     /**
@@ -458,16 +458,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         override fun onReceive(ctx: Context?, intent: Intent?) {
             when (intent?.getIntExtra("key", 0)) {
                 AppConfig.MSG_STATE_RUNNING -> {
-                    isRunning.value = true
+                    isRunning.postValue(true)
                 }
 
                 AppConfig.MSG_STATE_NOT_RUNNING -> {
-                    isRunning.value = false
+                    isRunning.postValue(false)
                 }
 
                 AppConfig.MSG_STATE_START_SUCCESS -> {
                     getApplication<AngApplication>().toastSuccess(R.string.toast_services_success)
-                    isRunning.value = true
+                    isRunning.postValue(true)
                 }
 
                 AppConfig.MSG_STATE_START_FAILURE -> {
@@ -477,26 +477,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     } else {
                         getApplication<AngApplication>().toastError(R.string.toast_services_failure)
                     }
-                    isRunning.value = false
+                    isRunning.postValue(false)
                 }
 
                 AppConfig.MSG_STATE_STOP_SUCCESS -> {
-                    isRunning.value = false
+                    isRunning.postValue(false)
                 }
 
                 AppConfig.MSG_MEASURE_DELAY_SUCCESS -> {
-                    updateTestResultAction.value = intent.getStringExtra("content")
+                    updateTestResultAction.postValue(intent.getStringExtra("content"))
                 }
 
                 AppConfig.MSG_MEASURE_CONFIG_SUCCESS -> {
                     val content = intent.getStringExtra("content")
-                    updateListAction.value = getPosition(content ?: "")
+                    updateListAction.postValue(getPosition(content ?: ""))
                 }
 
                 AppConfig.MSG_MEASURE_CONFIG_NOTIFY -> {
                     val content = intent.getStringExtra("content")
-                    updateTestResultAction.value =
+                    updateTestResultAction.postValue(
                         getApplication<AngApplication>().getString(R.string.connection_runing_task_left, content)
+                    )
                 }
 
                 AppConfig.MSG_MEASURE_CONFIG_FINISH -> {

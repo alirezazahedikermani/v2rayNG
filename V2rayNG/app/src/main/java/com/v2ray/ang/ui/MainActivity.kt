@@ -91,9 +91,9 @@ class MainActivity : BaseActivity() {
                     val content = HttpUtil.getUrlContentWithUserAgent(UrlContentRequest(configUrl))
                     if (content.isNotEmpty()) {
                         mainViewModel.removeAllServer()
-                        mainViewModel.subscriptionIdChanged("")
                         AngConfigManager.importBatchConfig(content, "", true)
                         withContext(Dispatchers.Main) {
+                            mainViewModel.subscriptionIdChanged("")
                             mainViewModel.reloadServerList()
                             pendingConnect = true
                             mainViewModel.testAllRealPing()
