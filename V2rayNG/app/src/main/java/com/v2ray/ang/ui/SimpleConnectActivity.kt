@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.VpnService
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +29,6 @@ import kotlinx.coroutines.withContext
 class SimpleConnectActivity : BaseActivity() {
 
     private lateinit var btnConnect: Button
-    private lateinit var btnNext: Button
     private lateinit var tvStatus: TextView
 
     private val configsUrl = "https://raw.githubusercontent.com/alirezazahedikermani/v2rayExtractor/refs/heads/main/scripts/test.txt"
@@ -63,12 +61,7 @@ class SimpleConnectActivity : BaseActivity() {
                     tryNextConfig("خطا در اتصال: ${error.orEmpty()}")
                 }
                 AppConfig.MSG_STATE_STOP_SUCCESS -> {
-                    if (switchingToNext) {
-                        switchingToNext = false
-                        connectToNextConfig()
-                    } else {
-                        setIdleState("")
-                    }
+                    setIdleState("")
                 }
                 AppConfig.MSG_STATE_RUNNING -> {
                     watchdogJob?.cancel()
@@ -86,14 +79,12 @@ class SimpleConnectActivity : BaseActivity() {
         setContentView(R.layout.activity_simple_connect)
 
         btnConnect = findViewById(R.id.btn_connect)
-        btnNext = findViewById(R.id.btn_next)
         tvStatus = findViewById(R.id.tv_status)
 
         val filter = IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY)
         ContextCompat.registerReceiver(this, msgReceiver, filter, Utils.receiverFlags())
 
         btnConnect.setOnClickListener { handleButtonClick() }
-        btnNext.setOnClickListener { handleNextClick() }
 
         // Check if already running
         if (CoreServiceManager.isRunning()) {
@@ -106,21 +97,6 @@ class SimpleConnectActivity : BaseActivity() {
         watchdogJob?.cancel()
         unregisterReceiver(msgReceiver)
     }
-
-    private fun handleNextClick() {
-        if (sortedConfigs.isEmpty()) return
-        // Disconnect current, then reconnect to the next config (circular)
-        currentConfigIndex = (currentConfigIndex + 1) % sortedConfigs.size
-        isConnecting = true
-        btnNext.isEnabled = false
-        btnConnect.isEnabled = false
-        tvStatus.text = "در حال سویچ به تنظیمات بعدی..."
-        CoreServiceManager.stopVService(this)
-        // Wait for stop confirmation before reconnecting (handled in msgReceiver via a flag)
-        switchingToNext = true
-    }
-
-    private var switchingToNext = false
 
     private fun handleButtonClick() {
         if (CoreServiceManager.isRunning()) {
@@ -196,10 +172,10 @@ class SimpleConnectActivity : BaseActivity() {
                 pingResults
             }
 
-            // Keep only configs that passed the relay test, sorted by delay ascending
-            sortedConfigs = results.filter { it.second > 0 }.sortedBy { it.second }
+            // Sort: valid delays first (ascending), then failed ones
+            sortedConfigs = results.sortedWith(compareBy { if (it.second > 0) it.second else Long.MAX_VALUE })
 
-            val validCount = sortedConfigs.size
+            val validCount = sortedConfigs.count { it.second > 0 }
             if (validCount == 0) {
                 setIdleState("هیچ تنظیمات معتبری پاسخ نداد")
                 return@launch
@@ -263,16 +239,7 @@ class SimpleConnectActivity : BaseActivity() {
         btnConnect.text = "قطع کردن"
         btnConnect.backgroundTintList = ContextCompat.getColorStateList(this, R.color.md_theme_tertiary)
         val serverName = CoreServiceManager.getRunningServerName()
-        val index = currentConfigIndex + 1
-        val total = sortedConfigs.size
-        tvStatus.text = buildString {
-            append(if (serverName.isNotEmpty()) "متصل به: $serverName" else "متصل")
-            if (total > 1) append(" ($index از $total)")
-        }
-        if (sortedConfigs.size > 1) {
-            btnNext.visibility = View.VISIBLE
-            btnNext.isEnabled = true
-        }
+        tvStatus.text = if (serverName.isNotEmpty()) "متصل به: $serverName" else "متصل"
     }
 
     private fun setIdleState(message: String) {
@@ -281,7 +248,6 @@ class SimpleConnectActivity : BaseActivity() {
         btnConnect.isEnabled = true
         btnConnect.text = "اتصال"
         btnConnect.backgroundTintList = ContextCompat.getColorStateList(this, R.color.md_theme_secondary)
-        btnNext.visibility = View.GONE
         tvStatus.text = message
     }
 }
