@@ -1,12 +1,11 @@
 package com.v2ray.ang.ui
 
-import android.content.Intent
-import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
@@ -24,7 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainActivity : HelperBaseActivity() {
+class MainActivity : BaseActivity() {
     private val binding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
@@ -45,8 +44,8 @@ class MainActivity : HelperBaseActivity() {
         MmkvManager.encodeSettings(AppConfig.PREF_AUTO_SORT_AFTER_TEST, true)
         MmkvManager.encodeSettings(AppConfig.PREF_AUTO_REMOVE_INVALID_AFTER_TEST, false)
 
-        binding.btn_connect.setOnClickListener { handleConnectClick() }
-        binding.btn_next.setOnClickListener { handleNextClick() }
+        binding.btnConnect.setOnClickListener { handleConnectClick() }
+        binding.btnNext.setOnClickListener { handleNextClick() }
 
         setupViewModel()
         mainViewModel.reloadServerList()
@@ -54,17 +53,17 @@ class MainActivity : HelperBaseActivity() {
 
     private fun setupViewModel() {
         mainViewModel.isRunning.observe(this) { isRunning ->
-            if (isRunning) {
-                binding.btn_connect.text = "Disconnect"
-                binding.tv_status.text = "Connected"
+            if (isRunning == true) {
+                binding.btnConnect.text = "Disconnect"
+                binding.tvStatus.text = "Connected"
             } else {
-                binding.btn_connect.text = "Connect"
-                binding.tv_status.text = "Not Connected"
+                binding.btnConnect.text = "Connect"
+                binding.tvStatus.text = "Not Connected"
             }
         }
 
         mainViewModel.testFinishedAction.observe(this) {
-            binding.pb_loading.hide()
+            binding.pbLoading.isVisible = false
             if (pendingConnect) {
                 pendingConnect = false
                 val bestServer = mainViewModel.serversCache.firstOrNull()
@@ -85,13 +84,14 @@ class MainActivity : HelperBaseActivity() {
         if (mainViewModel.isRunning.value == true) {
             CoreServiceManager.stopVService(this)
         } else {
-            binding.pb_loading.show()
+            binding.pbLoading.isVisible = true
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val configUrl = "https://raw.githubusercontent.com/alirezazahedikermani/v2rayExtractor/refs/heads/main/scripts/test.txt"
                     val content = HttpUtil.getUrlContentWithUserAgent(UrlContentRequest(configUrl))
                     if (content.isNotEmpty()) {
                         mainViewModel.removeAllServer()
+                        mainViewModel.subscriptionIdChanged("")
                         AngConfigManager.importBatchConfig(content, "", true)
                         withContext(Dispatchers.Main) {
                             mainViewModel.reloadServerList()
@@ -100,13 +100,13 @@ class MainActivity : HelperBaseActivity() {
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            binding.pb_loading.hide()
+                            binding.pbLoading.isVisible = false
                             toast("Failed to download configs")
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        binding.pb_loading.hide()
+                        binding.pbLoading.isVisible = false
                         toast("Error: ${e.message}")
                     }
                 }
@@ -169,6 +169,10 @@ class MainActivity : HelperBaseActivity() {
             startV2Ray()
         }
     }
+
+    // Dummy methods to satisfy legacy fragments during compilation
+    fun refreshGroupTabTitles(refreshAll: Boolean = false) {}
+    fun importConfigViaSub(): Boolean = true
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
